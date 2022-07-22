@@ -23,7 +23,15 @@ function checksExistsUserAccount(request, response, next) {
   return next();
 }
 
-function checksCreateTodosUserAvailability(request, response, next) {}
+function checksCreateTodosUserAvailability(request, response, next) {
+  const { user } = request;
+
+  if (!user.pro && user.todos.length >= 10) {
+    return response.status(403).json({ error: "Limit of 10 already" });
+  }
+
+  return next();
+}
 
 function checksTodoExists(request, response, next) {
   const { id } = request.params;
@@ -54,7 +62,17 @@ function checksTodoExists(request, response, next) {
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+
+  const user = users.find((usr) => usr.id === id);
+
+  if (!user) {
+    return response.status(404).json({ error: "User not found!" });
+  }
+
+  request.user = user;
+
+  return next();
 }
 
 app.post("/users", (request, response) => {
@@ -81,16 +99,11 @@ app.post("/users", (request, response) => {
   return response.status(201).json(user);
 });
 
-app.get(
-  "/users/:id",
-  checksExistsUserAccount,
-  findUserById,
-  (request, response) => {
-    const { user } = request;
+app.get("/users/:id", findUserById, (request, response) => {
+  const { user } = request;
 
-    return response.json(user);
-  }
-);
+  return response.json(user);
+});
 
 app.patch(
   "/users/:id/pro",
